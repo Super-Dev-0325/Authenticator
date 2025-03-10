@@ -1,22 +1,33 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { useEffect } from 'react'
+import useAuthStore from './store/authStore'
 import Login from './components/Login'
 import Register from './components/Register'
 import Dashboard from './components/Dashboard'
+import VerifyEmail from './components/VerifyEmail'
+import LoadingSpinner from './components/LoadingSpinner'
 import './App.css'
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, initialize } = useAuthStore()
+  
+  useEffect(() => {
+    initialize()
+  }, [initialize])
   
   if (loading) {
-    return <div className="loading">Loading...</div>
+    return <LoadingSpinner message="Loading..." />
   }
   
   return isAuthenticated ? children : <Navigate to="/login" />
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, initialize } = useAuthStore()
+  
+  useEffect(() => {
+    initialize()
+  }, [initialize])
   
   return (
     <Routes>
@@ -27,6 +38,10 @@ function AppRoutes() {
       <Route 
         path="/register" 
         element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} 
+      />
+      <Route 
+        path="/verify-email" 
+        element={<VerifyEmail />} 
       />
       <Route 
         path="/dashboard" 
@@ -43,11 +58,9 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <div className="App">
-        <AppRoutes />
-      </div>
-    </AuthProvider>
+    <div className="App">
+      <AppRoutes />
+    </div>
   )
 }
 

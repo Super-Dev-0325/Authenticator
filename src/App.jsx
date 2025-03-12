@@ -5,6 +5,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import Dashboard from './components/Dashboard'
 import VerifyEmail from './components/VerifyEmail'
+import PasswordReset from './components/PasswordReset'
 import LoadingSpinner from './components/LoadingSpinner'
 import './App.css'
 
@@ -42,6 +43,10 @@ function AppRoutes() {
       <Route 
         path="/verify-email" 
         element={<VerifyEmail />} 
+      />
+      <Route 
+        path="/password-reset" 
+        element={<PasswordReset />} 
       />
       <Route 
         path="/dashboard" 

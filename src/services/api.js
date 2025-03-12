@@ -23,14 +23,37 @@ api.interceptors.request.use(
   }
 )
 
-// Handle 401 errors
+// Handle 401 errors and refresh token
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
+  async (error) => {
+    const originalRequest = error.config
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (refreshToken) {
+        try {
+          const response = await authAPI.refreshToken(refreshToken)
+          localStorage.setItem('token', response.access_token)
+          localStorage.setItem('refreshToken', response.refresh_token)
+          
+          // Retry original request
+          originalRequest.headers.Authorization = `Bearer ${response.access_token}`
+          return api(originalRequest)
+        } catch (refreshError) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('refreshToken')
+          window.location.href = '/login'
+          return Promise.reject(refreshError)
+        }
+      } else {
+        localStorage.removeItem('token')
+        window.location.href = '/login'
+      }
     }
+    
     return Promise.reject(error)
   }
 )
@@ -59,6 +82,38 @@ export const authAPI = {
 
   getCurrentUser: async () => {
     const response = await api.get('/users/me')
+    return response.data
+  },
+
+  refreshToken: async (refreshToken) => {
+    const response = await api.post('/refresh', {
+      refresh_token: refreshToken,
+    })
+    return response.data
+  },
+
+  verifyEmail: async (token) => {
+    const response = await api.post('/verify-email', {
+      token,
+    })
+    return response.data
+  },
+
+  resendVerification: async (email) => {
+    const response = await api.post('/resend-verification', { email })
+    return response.data
+  },
+
+  requestPasswordReset: async (email) => {
+    const response = await api.post('/password-reset', { email })
+    return response.data
+  },
+
+  confirmPasswordReset: async (token, newPassword) => {
+    const response = await api.post('/password-reset/confirm', {
+      token,
+      new_password: newPassword,
+    })
     return response.data
   },
 }

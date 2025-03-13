@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard'
 import VerifyEmail from './components/VerifyEmail'
 import PasswordReset from './components/PasswordReset'
 import LoadingSpinner from './components/LoadingSpinner'
+import ErrorBoundary from './components/ErrorBoundary'
 import './App.css'
 
 function ProtectedRoute({ children }) {
@@ -63,9 +64,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <div className="App">
-      <AppRoutes />
-    </div>
+    <ErrorBoundary>
+      <div className="App">
+        <AppRoutes />
+      </div>
+    </ErrorBoundary>
   )
 }
 

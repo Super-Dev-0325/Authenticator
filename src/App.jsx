@@ -8,6 +8,7 @@ import VerifyEmail from './components/VerifyEmail'
 import PasswordReset from './components/PasswordReset'
 import LoadingSpinner from './components/LoadingSpinner'
 import ErrorBoundary from './components/ErrorBoundary'
+import UserProfile from './components/UserProfile'
 import './App.css'
 
 function ProtectedRoute({ children }) {
@@ -54,6 +55,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <UserProfile />
           </ProtectedRoute>
         } 
       />

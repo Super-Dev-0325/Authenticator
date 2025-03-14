@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import useAuthStore from '../store/authStore'
 import './Dashboard.css'
 
 function Dashboard() {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -21,9 +21,14 @@ function Dashboard() {
           <p><strong>Username:</strong> {user?.username}</p>
           <p><strong>Email:</strong> {user?.email}</p>
         </div>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button onClick={() => navigate('/profile')} className="logout-button" style={{ background: '#667eea' }}>
+            View Profile
+          </button>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -1,56 +1,64 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import useAuthStore from '../store/authStore'
+import { useEffect, useState } from 'react'
 import './Auth.css'
 
 function Register() {
-  const [email, setEmail] = useState('')
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { register, login } = useAuth()
+  const { register: registerUser, isAuthenticated, loading, error, clearError } = useAuthStore()
   const navigate = useNavigate()
+  const [registrationSuccess, setRegistrationSuccess] = useState(false)
+  
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  const password = watch('password')
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
     }
+  }, [isAuthenticated, navigate])
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
+  useEffect(() => {
+    return () => clearError()
+  }, [clearError])
 
-    setLoading(true)
-
-    const result = await register(email, username, password)
+  const onSubmit = async (data) => {
+    clearError()
+    const result = await registerUser(data.email, data.username, data.password)
     
     if (result.success) {
-      // Auto-login after registration
-      const loginResult = await login(username, password)
-      if (loginResult.success) {
-        navigate('/dashboard')
-      } else {
-        setError('Registration successful, but login failed. Please try logging in.')
-      }
-    } else {
-      setError(result.error)
+      setRegistrationSuccess(true)
     }
-    
-    setLoading(false)
+  }
+
+  if (registrationSuccess) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <h2>Registration Successful!</h2>
+          <div className="success-message">
+            <p>Please check your email to verify your account.</p>
+            <p>You can login after verifying your email.</p>
+          </div>
+          <Link to="/login" className="submit-button" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="auth-container">
       <div className="auth-card">
         <h2>Register</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           {error && <div className="error-message">{error}</div>}
           
           <div className="form-group">
@@ -58,11 +66,18 @@ function Register() {
             <input
               type="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address',
+                },
+              })}
               autoComplete="email"
             />
+            {errors.email && (
+              <span className="error-text">{errors.email.message}</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -70,11 +85,26 @@ function Register() {
             <input
               type="text"
               id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+              {...register('username', {
+                required: 'Username is required',
+                minLength: {
+                  value: 3,
+                  message: 'Username must be at least 3 characters',
+                },
+                maxLength: {
+                  value: 20,
+                  message: 'Username must be less than 20 characters',
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_]+$/,
+                  message: 'Username can only contain letters, numbers, and underscores',
+                },
+              })}
               autoComplete="username"
             />
+            {errors.username && (
+              <span className="error-text">{errors.username.message}</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -82,12 +112,22 @@ function Register() {
             <input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              {...register('password', {
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters',
+                },
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                  message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+                },
+              })}
               autoComplete="new-password"
-              minLength={6}
             />
+            {errors.password && (
+              <span className="error-text">{errors.password.message}</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -95,16 +135,24 @@ function Register() {
             <input
               type="password"
               id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
+              {...register('confirmPassword', {
+                required: 'Please confirm your password',
+                validate: (value) =>
+                  value === password || 'Passwords do not match',
+              })}
               autoComplete="new-password"
-              minLength={6}
             />
+            {errors.confirmPassword && (
+              <span className="error-text">{errors.confirmPassword.message}</span>
+            )}
           </div>
 
-          <button type="submit" disabled={loading} className="submit-button">
-            {loading ? 'Registering...' : 'Register'}
+          <button 
+            type="submit" 
+            disabled={isSubmitting || loading} 
+            className="submit-button"
+          >
+            {isSubmitting || loading ? 'Registering...' : 'Register'}
           </button>
         </form>
 
@@ -117,4 +165,3 @@ function Register() {
 }
 
 export default Register
-

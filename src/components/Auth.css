@@ -56,6 +56,26 @@
   border: 1px solid #fcc;
 }
 
+.error-text {
+  color: #c33;
+  font-size: 0.875rem;
+  margin-top: 5px;
+  display: block;
+}
+
+.success-message {
+  background-color: #efe;
+  color: #3c3;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #cfc;
+}
+
+.success-message p {
+  margin: 5px 0;
+}
+
 .submit-button {
   width: 100%;
   padding: 12px;

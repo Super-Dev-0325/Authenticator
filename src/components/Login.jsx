@@ -1,37 +1,43 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import useAuthStore from '../store/authStore'
+import { useEffect } from 'react'
 import './Auth.css'
 
 function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, isAuthenticated, loading, error, clearError } = useAuthStore()
   const navigate = useNavigate()
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+    }
+  }, [isAuthenticated, navigate])
 
-    const result = await login(username, password)
+  useEffect(() => {
+    return () => clearError()
+  }, [clearError])
+
+  const onSubmit = async (data) => {
+    clearError()
+    const result = await login(data.username, data.password)
     
     if (result.success) {
       navigate('/dashboard')
-    } else {
-      setError(result.error)
     }
-    
-    setLoading(false)
   }
 
   return (
     <div className="auth-container">
       <div className="auth-card">
         <h2>Login</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           {error && <div className="error-message">{error}</div>}
           
           <div className="form-group">
@@ -39,11 +45,18 @@ function Login() {
             <input
               type="text"
               id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+              {...register('username', {
+                required: 'Username is required',
+                minLength: {
+                  value: 3,
+                  message: 'Username must be at least 3 characters',
+                },
+              })}
               autoComplete="username"
             />
+            {errors.username && (
+              <span className="error-text">{errors.username.message}</span>
+            )}
           </div>
 
           <div className="form-group">
@@ -51,15 +64,26 @@ function Login() {
             <input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              {...register('password', {
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters',
+                },
+              })}
               autoComplete="current-password"
             />
+            {errors.password && (
+              <span className="error-text">{errors.password.message}</span>
+            )}
           </div>
 
-          <button type="submit" disabled={loading} className="submit-button">
-            {loading ? 'Logging in...' : 'Login'}
+          <button 
+            type="submit" 
+            disabled={isSubmitting || loading} 
+            className="submit-button"
+          >
+            {isSubmitting || loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
@@ -72,4 +96,3 @@ function Login() {
 }
 
 export default Login
-
